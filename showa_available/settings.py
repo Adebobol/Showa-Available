@@ -34,6 +34,7 @@ ALLOWED_HOSTS = []
 INSTALLED_APPS = [
     'corsheaders',
     'rest_framework',
+    "cart.apps.CartConfig",
     "Restaurants.apps.RestaurantsConfig",
     "Users.apps.UsersConfig",
     "django.contrib.admin",

@@ -1,4 +1,5 @@
 from rest_framework.views import APIView
+from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from .serializers import RestaurantSerializer, DishSerializer, OpeningHourSerializer
 from .models import Restaurant, Dish, OpeningHour
 from rest_framework.response import Response
@@ -165,3 +166,10 @@ class Opening_hours_restaurant(APIView):
             restaurant.opening_hours_list.add(new_opening_hour)
             return Response(opening_hour_serializer.data, status=status.HTTP_201_CREATED)
         return Response(opening_hour_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['GET', 'POST'])
+@authentication_classes([SessionAuthentication, BasicAuthentication])
+@permission_classes([IsAuthenticated])
+def restaurant_order(request):
+    pass

@@ -7,6 +7,7 @@ class Dish(models.Model):
     name = models.CharField(max_length=50, blank=False)
     photo = models.ImageField(
         default='showa_default_pic.jpg', blank=True, null=True, upload_to='dish_images')
+    price = models.IntegerField(default=200)
     available = models.BooleanField(default=True)
 
     def __str__(self):
