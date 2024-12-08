@@ -7,7 +7,7 @@ from Users import serializers as sr
 class OpeningHourSerializer(serializers.ModelSerializer):
     class Meta:
         model = OpeningHour
-        fields = "__all__"
+        fields = ["day", "open_time", "close_time"]
 
 
 class DishSerializer(serializers.ModelSerializer):

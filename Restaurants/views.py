@@ -1,6 +1,6 @@
 from rest_framework.views import APIView
-from .serializers import RestaurantSerializer, DishSerializer
-from .models import Restaurant, Dish
+from .serializers import RestaurantSerializer, DishSerializer, OpeningHourSerializer
+from .models import Restaurant, Dish, OpeningHour
 from rest_framework.response import Response
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework import status
@@ -122,3 +122,46 @@ class DishDetail(APIView):
         rest = restaurant.dishes.filter(name=name)
         serializer = DishSerializer(rest, many=True)
         return Response(serializer.data)
+
+
+class Opening_hours_restaurant(APIView):
+
+    authentication_classes = [SessionAuthentication, BasicAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get_restaurant(self, pk):
+        try:
+            restaurant = Restaurant.objects.get(pk=pk)
+            return restaurant
+        except Restaurant.DoesNotExist:
+            raise Http404
+
+    def get(self, request, pk):
+        restaurant = self.get_restaurant(pk=pk)
+        opening_hour = restaurant.opening_hours_list.all()
+        serializer = OpeningHourSerializer(opening_hour, many=True)
+        return Response(serializer.data)
+
+    @csrf_exempt
+    def post(self, request, pk):
+        restaurant = self.get_restaurant(pk=pk)
+
+        day = request.data.get("day")
+        open_time = request.data.get("open_time")
+        close_time = request.data.get("close_time")
+
+        particular_day = {
+            # "restaurant": restaurant.pk,
+            "day": day,
+            "open_time": open_time,
+            "close_time": close_time
+        }
+
+        opening_hour_serializer = OpeningHourSerializer(data=particular_day)
+
+        if opening_hour_serializer.is_valid():
+            new_opening_hour = opening_hour_serializer.save(
+                restaurant=restaurant)
+            restaurant.opening_hours_list.add(new_opening_hour)
+            return Response(opening_hour_serializer.data, status=status.HTTP_201_CREATED)
+        return Response(opening_hour_serializer.errors, status=status.HTTP_400_BAD_REQUEST)

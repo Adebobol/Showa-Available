@@ -17,6 +17,7 @@ import json
 @csrf_exempt
 @api_view(['GET', 'POST'])
 def register(request):
+    form = UserRegisterForm(request.POST)
     if request.method == 'POST':
 
         # if using rest_framework serializer
@@ -56,7 +57,7 @@ def register(request):
                     'message': 'User created successfully'
                 }, status=201)
 
-    return Response({'error': "Wrong Request"}, status=405)
+    return render(request, 'Users/register.html', {"form": form})
 
 
 class UserListView(APIView):
