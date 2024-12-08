@@ -15,9 +15,17 @@ import json
 
 
 @csrf_exempt
-# @api_view(['GET', 'POST'])
+@api_view(['GET', 'POST'])
 def register(request):
     if request.method == 'POST':
+
+        # if using rest_framework serializer
+        # users = UserSerializer(data=request.data)
+        # if users.is_valid():
+        #     users.save()
+        #     return Response(users)
+        # end of the rest_framework
+
         data = json.loads(request.body)
         username = data.get("username")
         email = data.get("email")
@@ -47,4 +55,12 @@ def register(request):
                     'email': user.email,
                     'message': 'User created successfully'
                 }, status=201)
-    return JsonResponse({'error': "Wrong Request"}, status=405)
+
+    return Response({'error': "Wrong Request"}, status=405)
+
+
+class UserListView(APIView):
+    def get(self, request):
+        user = User.objects.all()
+        serializer = UserSerializer(user, many=True)
+        return Response(serializer.data)
