@@ -2,6 +2,7 @@ from rest_framework.views import APIView
 from rest_framework.decorators import api_view, authentication_classes, permission_classes
 from .serializers import RestaurantSerializer, DishSerializer, OpeningHourSerializer
 from .models import Restaurant, Dish, OpeningHour
+from cart.models import Cart
 from rest_framework.response import Response
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework import status
@@ -9,6 +10,7 @@ from rest_framework.permissions import IsAuthenticated
 from django.contrib.auth.models import User
 from django.http import HttpResponse, JsonResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
+from cart.serializer import CartSerializer
 
 
 class RestaurantList(APIView):
@@ -120,9 +122,43 @@ class DishDetail(APIView):
 
     def get(self, request, pk, name):
         restaurant = Restaurant.objects.get(pk=pk)
-        rest = restaurant.dishes.filter(name=name)
-        serializer = DishSerializer(rest, many=True)
+        rest = restaurant.dishes.get(name=name)
+        serializer = DishSerializer(rest)
         return Response(serializer.data)
+
+    def post(self, request, pk, name):
+        restaurant = Restaurant.objects.get(pk=pk)
+
+        # dish from the restaurant i want to order from
+        dish = restaurant.dishes.get(name=name)
+
+        # details of user ordering
+        user = request.user
+
+        # print(user.username)
+        if not dish.available:
+            return Response({"message": "Dish not available"}, status=status.HTTP_400_BAD_REQUEST)
+
+        # checking if the user has a cart. If he does get it otherwise create a new cart
+        print("working")
+        try:
+            cart, created = Cart.objects.get_or_create(
+                user=user)
+        except Cart.DoesNotExist:
+
+            return Response({"error": "Unable to create or retrieve cart"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+        # saving the cart
+
+        # adding a dish to the cart
+        if dish not in cart.dishes.all():
+            cart.dishes.add(dish)
+
+        cart.save()
+
+        # serializing the cart
+        cart_serializer = CartSerializer(cart)
+        return Response(cart_serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
 
 class Opening_hours_restaurant(APIView):

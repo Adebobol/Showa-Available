@@ -9,7 +9,8 @@ urlpatterns = [
     path("admin/", admin.site.urls),
     path('', include('Users.urls')),
     path('login/', auth_views.LoginView.as_view(template_name='Users/login.html'), name='login'),
-    path("", include('Restaurants.urls'))
+    path("", include('Restaurants.urls')),
+    path("", include('cart.urls'))
 ]
 
 if settings.DEBUG:
