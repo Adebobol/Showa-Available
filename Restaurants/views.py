@@ -202,10 +202,3 @@ class Opening_hours_restaurant(APIView):
             restaurant.opening_hours_list.add(new_opening_hour)
             return Response(opening_hour_serializer.data, status=status.HTTP_201_CREATED)
         return Response(opening_hour_serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-@api_view(['GET', 'POST'])
-@authentication_classes([SessionAuthentication, BasicAuthentication])
-@permission_classes([IsAuthenticated])
-def restaurant_order(request):
-    pass
