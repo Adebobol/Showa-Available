@@ -6,7 +6,7 @@ from django.db.models import TextChoices
 
 
 class Cart(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, blank=False)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, blank=False)
     dishes = models.ManyToManyField(Dish, related_name='dishes')
     subtotal = models.DecimalField(
         default=0.00, max_digits=100, decimal_places=2)
