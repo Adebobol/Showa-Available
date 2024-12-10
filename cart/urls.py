@@ -4,5 +4,6 @@ from .import views
 
 urlpatterns = [
     path('cart/', views.cart_detail_get),
-    path('cart/checkout/', views.cart_checkout)
+    path('checkout/summary', views.cart_checkout),
+    path('cart/checkout/payment/add', views.cart_checkout),
 ]
