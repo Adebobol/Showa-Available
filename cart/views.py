@@ -3,13 +3,23 @@ from rest_framework.decorators import api_view, authentication_classes, permissi
 from rest_framework.response import Response
 from rest_framework.authentication import SessionAuthentication, BasicAuthentication
 from rest_framework.permissions import IsAuthenticated
-from .models import Cart
+from .models import Cart, Order
 from .serializer import CartSerializer, OrderSerializer
 from django.http import JsonResponse
 import json
 from django.http import Http404
 from Users.serializers import UserSerializer
 from django.contrib.auth.models import User
+from dotenv import load_dotenv
+import os
+import random
+import math
+import requests
+import uuid
+
+
+# loading dotenv
+load_dotenv()
 
 
 @api_view(['GET', 'POST', 'PUT'])
@@ -61,7 +71,7 @@ def cart_checkout(request):
     #     else:
     #         return Response(order_serializer.errors, status=400)
 
-    if request.method == "POST":
+    if request.method == "GET":
         try:
             ur_sr = UserSerializer(request.user)
             cart = Cart.objects.get(user=request.user)
@@ -100,3 +110,55 @@ def cart_checkout(request):
 
         cart_sr = CartSerializer(cart)
         return Response(cart_sr.data)
+
+
+@api_view(['GET', 'POST'])
+@authentication_classes([SessionAuthentication, BasicAuthentication])
+@permission_classes([IsAuthenticated])
+def confirm_order(request, orderId):
+    if request.method == "GET":
+
+        try:
+            myOrder = Order.objects.get(pk=orderId)
+
+            # return Response(sr_order.data)
+        except Order.DoesNotExist:
+            return Response({'error': "Order not found"}, status=404)
+
+        if myOrder.active:
+            # getting my order total and email
+            total_amount = myOrder.total_amount
+            email = request.user.email
+            flw_secret = os.getenv('FLUTTER_SECRET_KEY')
+
+            if not flw_secret:
+                return Response({'error': "Flutterwave secret kry not found."})
+
+            # flutterwave integration
+            url = "https://api.flutterwave.com/v3/payments"
+            payload = {
+                "tx_ref": str(uuid.uuid4()),
+                "amount": str(total_amount),
+                "currency": "NGN",
+                "redirect_url": "https://abcd1234.ngrok.io/payment/feedback/",
+                "payment_type": "card",
+                "customer": {
+                    "email": email,
+                    "username": request.user.username
+                }
+            }
+
+            headers = {
+                "Authorization": f"Bearer {flw_secret}",
+                "Content-Type": "application/json"
+            }
+
+            response = requests.post(url, json=payload, headers=headers)
+
+            if response.status_code != 200:
+                return Response({'error': 'Payment initiation failed'}, status=response.status_code)
+
+            response = response.json()
+            return Response(response)
+
+    return Response({'error': "Invalid request method"}, status=405)

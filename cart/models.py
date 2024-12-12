@@ -62,7 +62,12 @@ class Order(models.Model):
     def __str__(self):
         return f"Order {self.id} by {self.owner.username} - {self.status}"
 
+    def calculate_total_amount(self):
+        self.total_amount = self.cart.calculate_total() + self.delivery_fee
+        return self.total_amount
+
     def save(self, *args, **kwargs):
+        self.calculate_total_amount()
         if self.status == OrderStatus.DELIVERED:
             self.active = False
         super().save(*args, **kwargs)
