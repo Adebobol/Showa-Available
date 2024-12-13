@@ -12,6 +12,8 @@ from django.http import HttpResponse, JsonResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
 from cart.serializer import CartSerializer
 from .utils import geo
+from django.utils import timezone
+from datetime import datetime
 
 
 class RestaurantList(APIView):
@@ -222,3 +224,18 @@ class nearby_restaurant(APIView):
         Restaurant.objects.filter()
 
         return Response({"result": result}, status=status.HTTP_200_OK)
+
+
+class opened_restaurants(APIView):
+    authentication_classes = [SessionAuthentication, BasicAuthentication]
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        current_time = timezone.localtime(timezone.now()).time()
+        opened_hours = OpeningHour.objects.filter(
+            open_time=current_time, close_time=current_time)
+
+        open_restaurants = Restaurant.objects.filter(
+            id__in=opened_hours.values('restaurant'))
+
+        return Response(open_restaurants)

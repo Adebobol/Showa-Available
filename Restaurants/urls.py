@@ -10,5 +10,6 @@ urlpatterns = [
     path('restaurant/<int:pk>/dishes/<str:name>/', views.DishDetail.as_view()),
     path('restaurant/<int:pk>/opening_hour/',
          views.Opening_hours_restaurant.as_view()),
-    path('restaurant/nearby', views.nearby_restaurant.as_view())
+    path('restaurant/nearby', views.nearby_restaurant.as_view()),
+    path('restaurant/opened', views.opened_restaurants.as_view()),
 ]
