@@ -219,4 +219,6 @@ class nearby_restaurant(APIView):
             return Response({"error": "Address is required"}, status=status.HTTP_404_NOT_FOUND)
         result = geo.geo_address(address=address)
 
+        Restaurant.objects.filter()
+
         return Response({"result": result}, status=status.HTTP_200_OK)
