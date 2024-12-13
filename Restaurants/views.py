@@ -11,19 +11,12 @@ from django.contrib.auth.models import User
 from django.http import HttpResponse, JsonResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
 from cart.serializer import CartSerializer
-from geopy.geocoders import Nominatim
+from .utils import geo
 
 
 class RestaurantList(APIView):
     authentication_classes = [SessionAuthentication, BasicAuthentication]
     permission_classes = [IsAuthenticated]
-
-    def get_coordinates(address):
-        geolocator = Nominatim(user_agent="restaurant_api")
-        location = geolocator.geocode(address)
-        if location:
-            return location.latitude, location.longitude
-        return None
 
     def get(self, request):
         restaurant = Restaurant.objects.all().prefetch_related('opening_hours_list')
@@ -33,20 +26,20 @@ class RestaurantList(APIView):
 
     def post(self, request):
 
-        address = request.data.get('address')
-        location = self.get_coordinates(address)
+        rest_address = request.data.get("address")
+        lat, lon = geo.geo_address(rest_address)
 
         user_name = User.objects.get(username=request.user)
         name = request.data.get('name')
         dishes = request.data.get('dishes')
-        address = request.data.get('address')
-        latitude = location.latitude
-        longitude = location.longitude
+        address = rest_address
+        latitude = lat
+        longitude = lon
         owner = user_name
         about = request.data.get("about")
 
         new_rest = Restaurant.objects.create(
-            name=name, owner=owner, about=about)
+            name=name, owner=owner, about=about, address=address, latitude=latitude, longitude=longitude)
 
         serializer = RestaurantSerializer(new_rest)
 
@@ -221,35 +214,9 @@ class Opening_hours_restaurant(APIView):
 class nearby_restaurant(APIView):
     def get(self, request):
 
-        try:
-            lat = float(request.GET.get('lat'))
-            lng = float(request.GET.get('lng'))
-            address = request.GET.get('address')
-            radius = float(request.GET.get('radius', 5))
-        except (TypeError, ValueError):
-            return Response(
-                "Invalid or missing 'lat', 'lng', or 'radius' parameters.")
+        address = request.GET.get('address')
+        if not address:
+            return Response({"error": "Address is required"}, status=status.HTTP_404_NOT_FOUND)
+        result = geo.geo_address(address=address)
 
-        if not lat or not lng:
-            if not address:
-                return Response({"error": "Please provide either an address or coordinates"}, status=404)
-            geolocator = Nominatim(user_agent="restaurant_api")
-            location = geolocator.geocode(address)
-            if not location:
-                return Response({"error": "Address not found."}, status=404)
-            lat, lng = location.latitude, location.longitude
-
-            user_location = Point(float(lng), float(lat))
-
-            nearby_restaurants = Restaurant.objects.annotate(distance=Distance(
-                'location', user_location)).filter(distance_lte=radius*1000).order_by('distance')
-
-            data = [
-                {
-                    "name": restaurant.name,
-                    "address": restaurant.address,
-                    "distance_km": round(restaurant.distance.km, 2),
-                }
-                for restaurant in nearby_restaurants
-            ]
-            return Response(data)
+        return Response({"result": result}, status=status.HTTP_200_OK)
