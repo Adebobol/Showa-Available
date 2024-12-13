@@ -19,6 +19,9 @@ class Restaurant(models.Model):
     dishes = models.ManyToManyField(Dish, related_name='restaurants')
     owner = models.ForeignKey(User, on_delete=models.CASCADE)
     about = models.TextField(blank=False)
+    latitude = models.FloatField(default=0.0)
+    longitude = models.FloatField(default=0.0)
+    address = models.TextField(blank=False, default='lagos')
 
     def __str__(self):
         return self.name
